@@ -1,85 +1,80 @@
-# Word Replacer Plugin for WordPress
+# Word DB Replacer Plugin for WordPress
 
-Este es un plugin para WordPress cuya funcionalidad principal es reemplazar palabras específicas en el contenido de las publicaciones por términos alternativos. El propósito es ofrecer una manera sencilla de personalizar el lenguaje utilizado en el sitio.
+Este es un plugin de WordPress llamado "Word DB Replacer" que realiza sustituciones de palabras utilizando una base de datos. A continuación, se explican las diferencias y las nuevas funcionalidades en comparación con la versión anterior del plugin.
 
+## Cambios Principales
 
-## Configuración de Sustitución de Palabras
+### Acceso a la Base de Datos
 
 <details>
 <summary>Explicación</summary>
 
-El array de sustitución se define en el inicio del código y puede ser personalizado según las necesidades del usuario:
+En esta versión, el plugin utiliza una base de datos para almacenar las palabras a sustituir. Se ha agregado una nueva tabla `damJay` en la base de datos de WordPress para almacenar las palabras y sus sustituciones.
 
 ```php
-$replacement_words = get_option('word_replacer_words', array(
-    'mierda' => 'hez',
-    'puta' => 'colega',
-    'cagar' => 'defecar',
-    'follar' => 'comer spaghetti con queso',
-    'polla' => 'gallina'
-    // Añade más palabras según sea necesario
-));
+function createTable(){
+    // ... Código para la creación de la tabla en la base de datos ...
+}
+
+add_action( 'plugins_loaded', 'createTable' );
 ```
 
-Estas palabras y sus respectivos reemplazos se pueden modificar desde la página de configuración en el backend de WordPress.
+La función `createTable` se encarga de crear la tabla `damJay` cuando el plugin se carga. La tabla tiene columnas para almacenar las palabras originales (`cars`) y sus sustituciones (`places`).
 
 </details>
 
-## Función de Filtrado en el Contenido
+### Sustituciones Dinámicas desde la Base de Datos
 
 <details>
 <summary>Explicación</summary>
 
-El plugin utiliza el hook `the_content` para filtrar el contenido principal de las publicaciones. La función `filter_the_content_in_the_main_loop` realiza la sustitución de palabras malsonantes según el array definido previamente.
+En lugar de tener un array estático de palabras, el plugin ahora recupera las palabras y sus sustituciones desde la base de datos:
 
 ```php
-add_filter('the_content', 'filter_the_content_in_the_main_loop', 1);
-
-function filter_the_content_in_the_main_loop($content) {
-    global $replacement_words;
-
-    // Verifica si estamos dentro del bucle principal en un solo post
-    if (is_singular() && in_the_loop() && is_main_query()) {
-        // Realiza la sustitución de palabras
-        $content = str_replace(array_keys($replacement_words), array_values($replacement_words), $content);
-
-        return $content . esc_html__('Content filtered inside the main loop', 'word-replacer');
+function renym_wordpress_typo_fix($text){
+    $words = selectData();
+    foreach ($words as $result){
+        $cars[] = $result->cars;
+        $places[] = $result->places;
     }
-
-    return $content;
+    return str_replace($cars, $places, $text);
 }
+
+add_filter('the_content', 'renym_wordpress_typo_fix');
 ```
+
+La función `renym_wordpress_typo_fix` obtiene las palabras y sustituciones de la base de datos utilizando la función `selectData`. Luego, realiza las sustituciones en el contenido utilizando la función `str_replace`.
 
 </details>
 
-## Configuración en el Backend
+### Actualización de la Página de Configuración
 
 <details>
 <summary>Explicación</summary>
 
-El plugin agrega una página de configuración en el backend de WordPress para que los usuarios puedan personalizar las palabras de sustitución. Esto se logra mediante las siguientes funciones:
+La página de configuración en el backend ha sido actualizada para reflejar la nueva estructura basada en la base de datos. Ahora, se insertan datos en la base de datos en lugar de utilizar arrays estáticos.
 
 ```php
-add_action('admin_menu', 'word_replacer_menu');
-
-function word_replacer_menu() {
-    add_menu_page('Word Replacer Settings', 'Word Replacer', 'manage_options', 'word-replacer-settings', 'word_replacer_settings_page');
+function insertData(){
+    // ... Código para insertar datos en la base de datos ...
 }
 
-function word_replacer_settings_page() {
-    // ... Código para la página de configuración ...
-}
+add_action( 'plugins_loaded', 'insertData' );
 ```
 
-En la página de configuración, los usuarios pueden ver y editar las palabras de sustitución:
-
-- Las palabras originales se muestran en campos de texto, y los usuarios pueden editar los términos de sustitución.
-- Al hacer clic en "Save Changes," las configuraciones se guardan en la base de datos.
+La función `insertData` se ejecuta cuando el plugin se carga y verifica si ya hay datos en la tabla. Si no hay datos, inserta los valores de los arrays de alimentos (`$foods`) y empresas tecnológicas (`$companies`) en la base de datos.
 
 </details>
 
-<p></p>
-<p></p>
+## Uso del Plugin
 
+1. **Activación del Plugin:**
+   - Activa el plugin desde el panel de administración de WordPress.
 
-Este plugin proporciona una forma sencilla y flexible de personalizar el lenguaje utilizado en un sitio WordPress, adaptándolo a las preferencias del usuario.
+2. **Configuración:**
+   - No se requiere configuración manual. El plugin crea automáticamente la tabla en la base de datos y la llena con datos iniciales.
+
+3. **Funcionamiento:**
+   - El plugin sustituye dinámicamente las palabras en el contenido según lo definido en la base de datos.
+
+Este plugin proporciona una forma flexible de gestionar y personalizar las sustituciones de palabras mediante el uso de una base de datos en lugar de arrays estáticos.
